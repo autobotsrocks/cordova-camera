@@ -2,7 +2,9 @@ var Camera = function() {
 };
 
 Camera.prototype.getPicture = function(success, fail, allowCrop) {
-  allowCrop = allowCrop || true;
+  if (allowCrop !== false) {
+    allowCrop = true;
+  }
   return cordova.exec(success, fail, 'Camera', 'getPicture', [allowCrop]);
 };
 
