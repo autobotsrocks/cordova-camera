@@ -31,6 +31,11 @@
       <uses-feature android:name="android.hardware.camera" android:required="true"/>
     </config-file>
 
+    <config-file target="AndroidManifest.xml" parent="/manifest/application">
+      <activity android:name="com.soundcloud.android.crop.CropImageActivity" />
+    </config-file>
+
+    <framework src="com.soundcloud.android:android-crop:1.0.1@aar" target-dir="libs"/>
     <source-file src="src/android/com/autobots/Camera.java" target-dir="src/com/autobots"/>
   </platform>
 </plugin>

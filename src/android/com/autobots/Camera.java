@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import com.soundcloud.android.crop.Crop;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 
@@ -17,15 +19,23 @@ import java.io.File;
 
 public class Camera extends CordovaPlugin {
 
-    private static final int TAKE_PICTURE = 0;
+    private static final int REQUEST_CAPTURE = 0;
 
     private CallbackContext callbackContext;
     private Uri capturedPictureUri;
+    private Uri cropedPictureUri;
+    private boolean allowCrop;
 
     public boolean execute(String action, final JSONArray args, final CallbackContext callbackContext) throws JSONException {
         if (action.equals("getPicture")) {
+            long currentTimeMillis = System.currentTimeMillis();
+            String tempDirectoryPath = getTempDirectoryPath();
             this.callbackContext = callbackContext;
-            this.capturedPictureUri = Uri.fromFile(new File(getTempDirectoryPath(), System.currentTimeMillis() + ".jpg"));
+            this.capturedPictureUri = Uri.fromFile(new File(tempDirectoryPath, currentTimeMillis + ".jpg"));
+            this.allowCrop = args.getBoolean(0);
+            if (this.allowCrop) {
+                this.cropedPictureUri = Uri.fromFile(new File(tempDirectoryPath, currentTimeMillis + ".crop.jpg"));
+            }
             this.capturePicture();
         }
         return true;
@@ -33,9 +43,30 @@ public class Camera extends CordovaPlugin {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if (requestCode == TAKE_PICTURE) {
-            if (resultCode == Activity.RESULT_OK) {
-                this.callbackContext.success(this.capturedPictureUri.toString());
+        if (resultCode == Activity.RESULT_CANCELED) {
+            this.callbackContext.error("User cancelled");
+        } else {
+            if (requestCode == REQUEST_CAPTURE) {
+                if (resultCode == Activity.RESULT_OK) {
+                    if (this.allowCrop) {
+                        this.cordova.setActivityResultCallback(this);
+                        Crop.of(this.capturedPictureUri, this.cropedPictureUri).asSquare().start(this.cordova.getActivity());
+                    } else {
+                        this.callbackContext.success(this.capturedPictureUri.toString());
+                    }
+                } else {
+                    this.callbackContext.error("Can't capture picture");
+                }
+            } else if (requestCode == Crop.REQUEST_CROP) {
+                if (resultCode == Activity.RESULT_OK) {
+                    File capturedPicture = new File(this.capturedPictureUri.getPath());
+                    if (capturedPicture.exists()) {
+                        capturedPicture.delete();
+                    }
+                    this.callbackContext.success(Crop.getOutput(intent).toString());
+                } else if (resultCode == Crop.RESULT_ERROR) {
+                    this.callbackContext.error("Can't crop picture");
+                }
             }
         }
     }
@@ -45,9 +76,9 @@ public class Camera extends CordovaPlugin {
         intent.putExtra(MediaStore.EXTRA_OUTPUT, this.capturedPictureUri);
         PackageManager packageManager = this.cordova.getActivity().getPackageManager();
         if (intent.resolveActivity(packageManager) != null) {
-            this.cordova.startActivityForResult((CordovaPlugin) this, intent, TAKE_PICTURE);
+            this.cordova.startActivityForResult((CordovaPlugin) this, intent, REQUEST_CAPTURE);
         } else {
-            this.callbackContext.error("You don't have a default camera.  Your device may not be CTS complaint.");
+            this.callbackContext.error("You don't have a default camera.  Your device may not be CTS complaint");
         }
     }
 
