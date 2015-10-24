@@ -21,10 +21,6 @@ window.autobots.camera.getPicture(
 );
 ```
 
-# Libraries
-
-Android: [android-crop](https://github.com/jdamcd/android-crop)
-
 # License
 
 MIT

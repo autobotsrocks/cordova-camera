@@ -3,11 +3,10 @@ package com.autobots;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-
-import com.soundcloud.android.crop.Crop;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -20,6 +19,7 @@ import java.io.File;
 public class Camera extends CordovaPlugin {
 
     private static final int REQUEST_CAPTURE = 0;
+    private static final int REQUEST_CROP = 1;
 
     private CallbackContext callbackContext;
     private Uri capturedPictureUri;
@@ -49,23 +49,20 @@ public class Camera extends CordovaPlugin {
             if (requestCode == REQUEST_CAPTURE) {
                 if (resultCode == Activity.RESULT_OK) {
                     if (this.allowCrop) {
-                        this.cordova.setActivityResultCallback(this);
-                        Crop.of(this.capturedPictureUri, this.cropedPictureUri).asSquare().start(this.cordova.getActivity());
+                        this.cropImage();
                     } else {
                         this.callbackContext.success(this.capturedPictureUri.toString());
                     }
                 } else {
                     this.callbackContext.error("Can't capture picture");
                 }
-            } else if (requestCode == Crop.REQUEST_CROP) {
+            } else if (requestCode == REQUEST_CROP) {
                 if (resultCode == Activity.RESULT_OK) {
                     File capturedPicture = new File(this.capturedPictureUri.getPath());
                     if (capturedPicture.exists()) {
                         capturedPicture.delete();
                     }
-                    this.callbackContext.success(Crop.getOutput(intent).toString());
-                } else if (resultCode == Crop.RESULT_ERROR) {
-                    this.callbackContext.error("Can't crop picture");
+                    this.callbackContext.success(this.cropedPictureUri.toString());
                 }
             }
         }
@@ -80,6 +77,20 @@ public class Camera extends CordovaPlugin {
         } else {
             this.callbackContext.error("You don't have a default camera.  Your device may not be CTS complaint");
         }
+    }
+
+    private void cropImage() {
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(this.capturedPictureUri, "image/*");
+        intent.putExtra("crop", "true");
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+        intent.putExtra("scale", true);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, this.cropedPictureUri);
+        intent.putExtra("return-data", false);
+        intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+        intent.putExtra("noFaceDetection", true);
+        this.cordova.startActivityForResult((CordovaPlugin) this, intent, REQUEST_CROP);
     }
 
     private String getTempDirectoryPath() {
