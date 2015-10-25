@@ -21,6 +21,10 @@ window.autobots.camera.getPicture(
 );
 ```
 
+# Dependencies
+
+iOS: [PEPhotoCropEditor](https://github.com/kishikawakatsumi/PEPhotoCropEditor)
+
 # License
 
 MIT

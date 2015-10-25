@@ -25,9 +25,22 @@
       </feature>
     </config-file>
 
-    <framework src="AVFoundation.framework"/>
     <header-file src="src/ios/Camera.h"/>
     <source-file src="src/ios/Camera.m"/>
+
+    <header-file src="src/ios/lib/PEPhotoCropEditor/PECropRectView.h" />
+    <source-file src="src/ios/lib/PEPhotoCropEditor/PECropRectView.m" />
+    <header-file src="src/ios/lib/PEPhotoCropEditor/PECropView.h" />
+    <source-file src="src/ios/lib/PEPhotoCropEditor/PECropView.m" />
+    <header-file src="src/ios/lib/PEPhotoCropEditor/PECropViewController.h" />
+    <source-file src="src/ios/lib/PEPhotoCropEditor/PECropViewController.m" />
+    <header-file src="src/ios/lib/PEPhotoCropEditor/PEResizeControl.h" />
+    <source-file src="src/ios/lib/PEPhotoCropEditor/PEResizeControl.m" />
+    <header-file src="src/ios/lib/PEPhotoCropEditor/UIImage+PECrop.h" />
+    <source-file src="src/ios/lib/PEPhotoCropEditor/UIImage+PECrop.m" />
+    <resource-file src="src/ios/Lib/PEPhotoCropEditor/PEPhotoCropEditor.bundle" />
+    <framework src="QuartzCore.framework" />
+    <framework src="AVFoundation.framework" />
   </platform>
 
   <platform name="android">

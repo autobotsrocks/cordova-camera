@@ -11,6 +11,8 @@
         }
 
         self.callbackId = command.callbackId;
+        self.allowCrop = [[command argumentAtIndex:0 withDefault:@(YES)] boolValue];
+
         UIImagePickerController* picker = [[UIImagePickerController alloc] init];
         picker.delegate = self;
         picker.sourceType = UIImagePickerControllerSourceTypeCamera;
@@ -21,19 +23,58 @@
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
     [picker dismissViewControllerAnimated:YES completion:^{
         UIImage* image = [info objectForKey:UIImagePickerControllerOriginalImage];
-        NSString* path = [self parseImagePath:image fileName:@"jpg"];
+        if (self.allowCrop) {
+            CGFloat width = image.size.width;
+            CGFloat height = image.size.height;
+            CGFloat length = MIN(width, height);
+            PECropViewController* imageCropVC = [[PECropViewController alloc] init];
+            imageCropVC.delegate = self;
+            imageCropVC.image = image;
+            imageCropVC.toolbarHidden = YES;
+            imageCropVC.imageCropRect = CGRectMake((width - length) / 2, (height - length) / 2, length, length);
+            UINavigationController* navigationController = [[UINavigationController alloc] initWithRootViewController:imageCropVC];
+            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+                navigationController.modalPresentationStyle = UIModalPresentationFormSheet;
+            }
+            [self.viewController presentViewController:navigationController animated:YES completion:nil];
+        } else {
+            NSString* path = [self parseImagePath:image fileName:@"jpg"];
+            CDVPluginResult* pluginResult = nil;
+            if (path) {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:path];
+            } else {
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Can't capture picture"];
+            }
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+        }
+    }];
+}
+
+-(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"User cancelled"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+    }];
+}
+
+- (void)cropViewController:(PECropViewController *)picker didFinishCroppingImage:(UIImage *)croppedImage {
+    [picker dismissViewControllerAnimated:YES completion:^{
+        NSString* path = [self parseImagePath:croppedImage fileName:@"crop.jpg"];
         CDVPluginResult* pluginResult = nil;
         if (path) {
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:path];
         } else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Can't capture picture"];
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Can't crop picture"];
         }
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
     }];
 }
 
--(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
-  [picker dismissViewControllerAnimated:YES completion:nil];
+- (void)cropViewControllerDidCancel:(PECropViewController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"User canceled"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+    }];
 }
 
 -(NSString*) parseImagePath:(UIImage*) image fileName:(NSString*) fileName {
