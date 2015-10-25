@@ -18,6 +18,18 @@
     <clobbers target="autobots.camera" />
   </js-module>
 
+  <platform name="ios">
+    <config-file target="config.xml" parent="/*">
+      <feature name="Camera">
+        <param name="ios-package" value="Camera"/>
+      </feature>
+    </config-file>
+
+    <framework src="AVFoundation.framework"/>
+    <header-file src="src/ios/Camera.h"/>
+    <source-file src="src/ios/Camera.m"/>
+  </platform>
+
   <platform name="android">
     <config-file target="res/xml/config.xml" parent="/*">
       <feature name="Camera">
