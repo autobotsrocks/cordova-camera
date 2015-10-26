@@ -24,14 +24,10 @@
     [picker dismissViewControllerAnimated:YES completion:^{
         UIImage* image = [info objectForKey:UIImagePickerControllerOriginalImage];
         if (self.allowCrop) {
-            CGFloat width = image.size.width;
-            CGFloat height = image.size.height;
-            CGFloat length = MIN(width, height);
             PECropViewController* imageCropVC = [[PECropViewController alloc] init];
             imageCropVC.delegate = self;
             imageCropVC.image = image;
             imageCropVC.toolbarHidden = YES;
-            imageCropVC.imageCropRect = CGRectMake((width - length) / 2, (height - length) / 2, length, length);
             UINavigationController* navigationController = [[UINavigationController alloc] initWithRootViewController:imageCropVC];
             if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
                 navigationController.modalPresentationStyle = UIModalPresentationFormSheet;
